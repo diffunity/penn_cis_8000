@@ -19,7 +19,7 @@ bash self-rag/setup.sh
 Command
 
 ```
-python3 main.py no_retrieve "What is Zimbabwe?"
+python3 main.py no_retrieve "Age 21 became the uniform legal drinking age across the us in?"
 ```
 
 Output
@@ -36,7 +36,7 @@ Response:
 Command
 
 ```
-python3 main.py retrieve "What is Zimbabwe?"
+python3 main.py retrieve "Age 21 became the uniform legal drinking age across the us in?"
 ```
 
 Output
@@ -52,7 +52,7 @@ Response:
 Command
 
 ```
-python3 main.py self_rag "What is Zimbabwe?" always_retrieve
+python3 main.py self_rag "Age 21 became the uniform legal drinking age across the us in?" always_retrieve
 ```
 
 Output
