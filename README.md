@@ -90,7 +90,7 @@ Input Data:
 }]
 ```
 
-* Notice how all the contexts thrown into the prompt all at once.
+* Notice how all the contexts are thrown into the prompt all at once.
 * As a result, the Baseline RAG struggles to amalgamate information from the multiple sources of context.
 
 ### Self-RAG
