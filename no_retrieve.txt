@@ -1,0 +1,9 @@
+['no_retrieve', 'Age 21 became the uniform legal drinking age across the us in?']
+INFO 12-06 11:23:36 llm_engine.py:73] Initializing an LLM engine with config: model='meta-llama/Llama-2-7b-hf', tokenizer='meta-llama/Llama-2-7b-hf', tokenizer_mode=auto, revision=None, tokenizer_revision=None, trust_remote_code=False, dtype=torch.float16, max_seq_len=4096, download_dir='./', load_format=auto, tensor_parallel_size=1, quantization=None, enforce_eager=False, seed=0)
+INFO 12-06 11:23:40 llm_engine.py:223] # GPU blocks: 1000, # CPU blocks: 512
+INFO 12-06 11:23:41 model_runner.py:394] Capturing the model for CUDA graphs. This may lead to unexpected consequences if the model is not static. To run the model in eager mode, set 'enforce_eager=True' or use '--enforce-eager' in the CLI.
+INFO 12-06 11:23:44 model_runner.py:437] Graph capturing finished in 3 secs.
+Results: [{'instruction': 'Age 21 became the uniform legal drinking age across the us in?', 'output': '\n21', 'input': '', 'topic': '', 'id': 0, 'dataset_name': 'dummy', 'golds': ''}]
+================================
+Response: 
+21

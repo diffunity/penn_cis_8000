@@ -5,6 +5,7 @@ from tqdm import tqdm
 import numpy as np
 import string
 import sys
+import ast
 
 sys.path.append("./self-rag")
 sys.path.append("./self-rag/retrieval_lm")
@@ -73,27 +74,6 @@ def load_file(input_fp):
     else:
         input_data = load_jsonlines(input_fp)
     return input_data
-
-def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
-    ret_tokens = {token: tokenizer.convert_tokens_to_ids(
-        token) for token in retrieval_tokens_names}
-    rel_tokens = {}
-    for token in ["[Irrelevant]", "[Relevant]"]:
-        rel_tokens[token] = tokenizer.convert_tokens_to_ids(token)
-
-    grd_tokens = None
-    if use_grounding is True:
-        grd_tokens = {}
-        for token in ground_tokens_names:
-            grd_tokens[token] = tokenizer.convert_tokens_to_ids(token)
-
-    ut_tokens = None
-    if use_utility is True:
-        ut_tokens = {}
-        for token in utility_tokens_names:
-            ut_tokens[token] = tokenizer.convert_tokens_to_ids(token)
-
-    return ret_tokens, rel_tokens, grd_tokens, ut_tokens
 
 def save_file_jsonl(data, fp):
     with jsonlines.open(fp, mode='w') as writer:
@@ -187,7 +167,14 @@ def match(prediction, ground_truth):
             return 1
     return 0
 
-def run_baseline_without_retrieval(args, model, input_data):
+def run_baseline_without_retrieval(args, model, input_data, retriever=None):
+
+    # For baseline scripts, we simply load pre-retrieved documents from `retrieval_file` option.
+    if retriever is not None:
+        ctxs = retriever.search_document_demo(input_data[0]["instruction"], args.ndocs)
+        evidences = ["[{}] ".format(
+            i+1) + ctx["title"]+"\n" + ctx["text"] for i, ctx in enumerate(ctxs)]
+        input_data[0]["paragraph"] = "\n".join(evidences)
 
     for item in input_data:
         if "golds" not in item:

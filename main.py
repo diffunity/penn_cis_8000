@@ -29,7 +29,7 @@ def input_reformat(question, answer, id_=0):
 
 def init_model(args):
 
-    if args.model == "no_retrieve":
+    if args.model == "no_retrieve" or args.model == "retrieve":
         args.model_name = "meta-llama/Llama-2-7b-hf"
         download_dir = "./"
         world_size = 1
@@ -37,9 +37,6 @@ def init_model(args):
         model = LLM(model=args.model_name,
                     download_dir=download_dir,
                     tensor_parallel_size=world_size)
-
-    elif args.model == "retrieve":
-        pass
 
     elif args.model == "self_rag":
         args.model_name = "selfrag/selfrag_llama2_7b"
@@ -51,8 +48,28 @@ def init_model(args):
 def main(args):
     
     model = init_model(args)
-
     if args.model == "retrieve":
+        has_eval = hasattr(args, "answer")
+        single_input = [input_reformat(
+            question=args.question,
+            answer=args.answer if has_eval else "",
+        )]
+
+        retriever = Retriever({})
+        retriever.setup_retriever_demo(
+            "facebook/contriever-msmarco", 
+            "enwiki_2020_intro_only/enwiki_2020_dec_intro_only.jsonl", 
+            "enwiki_2020_intro_only/enwiki_dec_2020_contriever_intro/*",  
+            n_docs=5, save_or_load_index=False
+        )
+        final_results, input_data = run_baseline_without_retrieval(args, model, single_input, retriever)
+
+        # variable name here is misleading. both variables usually store the same data but make sure you use input_data variable for evaluation
+        print("Results:", final_results)
+        print("Input Data:", input_data)
+
+        print("="*32)
+        print("Response:", final_results[0]["output"])
 
     elif args.model == "no_retrieve":
         has_eval = hasattr(args, "answer")
@@ -63,6 +80,8 @@ def main(args):
         final_results, input_data = run_baseline_without_retrieval(args, model, single_input)
         # variable name here is misleading. both variables usually store the same data but make sure you use input_data variable for evaluation
         print("Results:", final_results)
+        print("="*32)
+        print("Response:", final_results[0]["output"])
         if has_eval:
             eval_baseline_without_retrieval(input_data, args)
 
@@ -76,8 +95,8 @@ def main(args):
             n_docs=5, save_or_load_index=False
         )
         pred = run_self_rag(args, model, [args.question], retriever)
-        pred
-
+        print("="*32)
+        print("Response:", pred['data'][0]['output'])
 
 
 if __name__ == "__main__":
@@ -99,11 +118,21 @@ if __name__ == "__main__":
         use_seqscore = True,
         threshold = 0.2,
         beam_width = 2,
-        max_depth = 2,
+        max_depth = 7,
         ignore_cont = False,
     )
+
     args.model = sys.argv[1]
     args.question = sys.argv[2]
+    if args.model == "self_rag":
+        args.task = "asqa"
+    elif args.model == "no_retrieve":
+        args.task = "qa"
+        args.prompt_name = "prompt_no_input"
+    elif args.model == "retrieve":
+        args.task = "qa"
+        args.prompt_name = "prompt_no_input_retrieval"
+
     args.mode = sys.argv[3] if len(sys.argv) > 3 else "no_retrieve"
 
     main(args)

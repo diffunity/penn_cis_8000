@@ -12,6 +12,38 @@ from passage_retrieval import Retriever
 
 from transformers import AutoTokenizer
 
+from utils import (
+    rel_tokens_names,
+    retrieval_tokens_names,
+    utility_tokens_names,
+    ground_tokens_names,
+    other_special_tokens,
+    control_tokens,
+    PROMPT_DICT,
+    TASK_INST,
+)
+
+def load_special_tokens(tokenizer, use_grounding=False, use_utility=False):
+    ret_tokens = {token: tokenizer.convert_tokens_to_ids(
+        token) for token in retrieval_tokens_names}
+    rel_tokens = {}
+    for token in ["[Irrelevant]", "[Relevant]"]:
+        rel_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+
+    grd_tokens = None
+    if use_grounding is True:
+        grd_tokens = {}
+        for token in ground_tokens_names:
+            grd_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+
+    ut_tokens = None
+    if use_utility is True:
+        ut_tokens = {}
+        for token in utility_tokens_names:
+            ut_tokens[token] = tokenizer.convert_tokens_to_ids(token)
+
+    return ret_tokens, rel_tokens, grd_tokens, ut_tokens
+
 def postprocess(pred):
     special_tokens = ["[Fully supported]", "[Partially supported]", "[No support / Contradictory]", "[No Retrieval]", "[Retrieval]",
                       "[Irrelevant]", "[Relevant]", "<paragraph>", "</paragraph>", "[Utility:1]", "[Utility:2]", "[Utility:3]", "[Utility:4]", "[Utility:5]"]
@@ -78,8 +110,7 @@ def run_self_rag(args, model, input_data, retriever):
                 continue
             else:
                 prev_gen.append(postprocessed_result)
-            final_output += postprocessed_result[:-
-                                                    1] + " [{}]".format(idx) + ". "
+            final_output += postprocessed_result[:-1] + " [{}]".format(idx) + ". "
             docs.append(doc)
         if len(final_output) == 0:
             item["output"] = fix_spacing(final_output)
@@ -101,12 +132,13 @@ def run_self_rag(args, model, input_data, retriever):
 def run_step_generation_batch(model, prompt, paragraphs,  max_new_tokens,
                               rel_tokens=None, grd_tokens=None, ret_tokens=None, ut_tokens=None,
                               threshold=None, w_rel=1.0, w_sup=1.0, w_use=0.5, use_seqscore=False):
+
     if paragraphs is not None:
         aug_prompts = [prompt + "[Retrieval]" + "<paragraph>{}</paragraph>".format(
             paragraph["title"] + "\n" + paragraph["text"]) for paragraph in paragraphs]
     else:
         aug_prompts = [prompt]
-
+    print(aug_prompts)
     sampling_params = SamplingParams(
         temperature=0.0, top_p=1.0, max_tokens=max_new_tokens, logprobs=20, )
     preds = model.generate(aug_prompts, sampling_params)
@@ -232,6 +264,7 @@ def run_step_generation_batch(model, prompt, paragraphs,  max_new_tokens,
 
     preds = final_preds
     scores = [overall_scores[p_idx]["final_score"] for p_idx in overall_scores]
+
     return preds, scores, overall_scores
 
 def call_model_beam_batch(prompt, model, max_new_tokens=15, ctxs=None, query=None, max_depth=5, rel_tokens=None,
