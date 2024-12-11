@@ -12,6 +12,28 @@ git clone git@github.com:AkariAsai/self-rag.git
 bash self-rag/setup.sh
 ```
 
+
+<details>
+<summary>Caution</summary>
+
+* Make sure self-rag folder exists within this repository
+
+
+* You may need to have set up the documents for retrieval. Refer to L90 ~ L96
+
+```python
+    retriever = Retriever({})
+    retriever.setup_retriever_demo(
+        "facebook/contriever-msmarco", 
+        "enwiki_2020_intro_only/enwiki_2020_dec_intro_only.jsonl", 
+        "enwiki_2020_intro_only/enwiki_dec_2020_contriever_intro/*",  
+        n_docs=5, save_or_load_index=False
+    )
+```
+
+</details>
+
+
 ## Run
 
 ### Baseline
